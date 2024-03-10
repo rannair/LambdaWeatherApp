@@ -1,0 +1,56 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  LambdaWeatherApp
+
+  Sample SAM Template for LambdaWeatherApp
+Globals:
+  Function:
+    Runtime: java11
+    MemorySize: 512
+    Timeout: 25
+    Environment:
+      Variables:
+        LOCATIONS_TABLE: !Ref LocationsTable
+  Api:
+    OpenApiVersion: '3.0.1'
+
+Resources:
+  LocationsTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: locationName
+        Type: String
+
+  WeatherEventLambda:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: WeatherEventLambda
+      Handler: weather.WeatherEventLambda::handleRequest
+      CodeUri: target/lambda.zip
+      Policies:
+        - DynamoDBCrudPolicy:
+           TableName: !Ref LocationsTable
+      Events:
+        ApiEvents:
+          Type: Api
+          Properties:
+            Path: /events
+            Method: POST
+
+  WeatherQueryLambda:
+      Type: AWS::Serverless::Function
+      Properties:
+       FunctionName: WeatherQueryLambda
+       Handler: weather.WeatherQueryLambda::handleRequest
+       CodeUri: target/lambda.zip
+       Policies:
+         - DynamoDBReadPolicy:
+            TableName: !Ref LocationsTable
+       Events:
+         ApiEvents:
+           Type: Api
+           Properties:
+             Path: /locations
+             Method: GET
