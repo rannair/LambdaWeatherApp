@@ -1,6 +1,6 @@
 # LambdaWeatherApp
 
-This is a sample serverless DataPipeline application  which process a json file containing weather events uploaded to s3 bucket.
+This is a sample serverless  application   to store and retrieve data from DynamoDb.
 
 
 ## Deploy the sample application
@@ -19,4 +19,4 @@ To build and deploy your application for the first time, run the following in yo
 1) Build  and package the  application using **mvn clean package**
 2) validate the sam template using  **sam validate -t template.yaml**
 3) create a s3 bucket for SAM to manage lambda artifacts by running **aws s3api create-bucket --bucket <BUCKET_NAME> --region us-east-1**
-4) Deploy the application using sam deploy **--s3-bucket <BUCKET_NAME>  --stack-name lambda-weather-app  --capabilities CAPABILITY_IAM**
+4) Deploy the application using sam deploy **--s3-bucket <BUCKET_NAME>  --stack-name lambda-weather-pp  --capabilities CAPABILITY_IAM**
