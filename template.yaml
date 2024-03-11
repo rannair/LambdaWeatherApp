@@ -12,10 +12,12 @@ Globals:
     Environment:
       Variables:
         LOCATIONS_TABLE: !Ref LocationsTable
-  Api:
-    OpenApiVersion: '3.0.1'
 
 Resources:
+  APIGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
   LocationsTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -36,6 +38,7 @@ Resources:
         ApiEvents:
           Type: Api
           Properties:
+            RestApiId: !Ref APIGateway
             Path: /events
             Method: POST
 
@@ -52,5 +55,6 @@ Resources:
          ApiEvents:
            Type: Api
            Properties:
+             RestApiId: !Ref APIGateway
              Path: /locations
              Method: GET

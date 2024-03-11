@@ -20,3 +20,25 @@ To build and deploy your application for the first time, run the following in yo
 2) validate the sam template using  **sam validate -t template.yaml**
 3) create a s3 bucket for SAM to manage lambda artifacts by running **aws s3api create-bucket --bucket <BUCKET_NAME> --region us-east-1**
 4) Deploy the application using sam deploy **--s3-bucket <BUCKET_NAME>  --stack-name lambda-weather-pp  --capabilities CAPABILITY_IAM**
+
+To test the application after deployment:
+
+Get the POST invoke URl from API gateway console and replace in curl command 
+
+Insert data by executing below statements:
+curl --location 'https://g1qwvydbjf.execute-api.us-east-1.amazonaws.com/Prod/events' \
+--header 'Content-Type: application/json' \
+--data '{"locationName":"Brooklyn, NY", "temperature":91,
+"timestamp":1564428897, "latitude": 40.70, "longitude": -73.99}'
+
+curl --location 'https://g1qwvydbjf.execute-api.us-east-1.amazonaws.com/Prod/events' \
+--header 'Content-Type: application/json' \
+--data '{"locationName":"Oxford, UK", "temperature":64,
+"timestamp":1564428898, "latitude": 51.75, "longitude": -1.25}'
+
+Query the data inserted in above commands by invoking executing below statement:
+
+curl --location 'https://g1qwvydbjf.execute-api.us-east-1.amazonaws.com/Prod/locations'
+
+Tear down stack after usage :
+To tear down  the stack by running the command from cli **aws cloudformation delete-stack --stack-name LambdaWeatherApp**
