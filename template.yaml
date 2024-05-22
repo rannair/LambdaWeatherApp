@@ -12,12 +12,14 @@ Globals:
     Environment:
       Variables:
         LOCATIONS_TABLE: !Ref LocationsTable
+    Tracing: Active
 
 Resources:
   APIGateway:
     Type: AWS::Serverless::Api
     Properties:
       StageName: Prod
+      TracingEnabled: true
   LocationsTable:
     Type: AWS::Serverless::SimpleTable
     Properties:
@@ -58,3 +60,50 @@ Resources:
              RestApiId: !Ref APIGateway
              Path: /locations
              Method: GET
+  WeatherEventLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${WeatherEventLambda}"
+
+  OxfordWeatherMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      FilterName: OxfordWeatherMetricFilter
+      FilterPattern: '{$.message.locationName = "Oxford, UK"}'
+      LogGroupName: !Ref WeatherEventLambdaLogGroup
+      MetricTransformations:
+        - MetricValue: "1"
+          DefaultValue: 0
+          MetricName: OxfordWeatherEventCount
+          MetricNamespace: WeatherApp
+
+  BrooklynWeatherMetricFilter:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      FilterName: BrooklynWeatherMetricFilter
+      FilterPattern: '{$.message.locationName = "Brooklyn, NY"}'
+      LogGroupName: !Ref WeatherEventLambdaLogGroup
+      MetricTransformations:
+        - MetricValue: "1"
+          DefaultValue: 0
+          MetricName: BrooklynWeatherEventCount
+          MetricNamespace: WeatherApp
+
+  OxfordWeatherTopic:
+    Type: AWS::SNS::Topic
+
+  BrooklynWeatherAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      Namespace: WeatherApp
+      AlarmName: BrooklynWeatherAlarm
+      MetricName: BrooklynWeatherEventCount
+      Statistic: Sum
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 1
+      Period: 10
+      EvaluationPeriods: 1
+      TreatMissingData: breaching
+      AlarmActions:
+       - !Ref OxfordWeatherTopic
+

@@ -1,7 +1,11 @@
 package weather;
 
+import com.amazonaws.services.lambda.runtime.Context;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.message.ObjectMessage;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
@@ -27,7 +31,9 @@ public class WeatherEventLambda {
             false);
     private final String tableName = System.getenv("LOCATIONS_TABLE");
 
-    public ApiGatewayResponse handleRequest(final ApiGatewayRequest request) throws IOException {
+    private static Logger log = LogManager.getLogger(WeatherEventLambda.class);
+
+    public ApiGatewayResponse handleRequest(final ApiGatewayRequest request, Context context) throws IOException {
 
         final WeatherEvent weatherEvent = objectMapper.readValue(request.getBody(), WeatherEvent.class);
 
@@ -38,6 +44,18 @@ public class WeatherEventLambda {
         item.put("temperature", AttributeValue.builder().n(String.valueOf(weatherEvent.getTemperature())).build());
         item.put("timestamp", AttributeValue.builder().n(String.valueOf(weatherEvent.getTimestamp())).build());
 
+        //log.info("Put request item -->"+new ObjectMessage(item));
+
+        // This section is  to test  querying data from logs using json path expression e.g {$.message.locationName = "Oxford, UK"}
+
+        Map<String, String> data = new HashMap<>();
+        data.put("locationName", weatherEvent.getLocationName());
+        data.put("latitude", String.valueOf(weatherEvent.getLatitude()));
+        data.put("longitude", String.valueOf(weatherEvent.getLongitude()));
+        data.put("temperature", String.valueOf(weatherEvent.getTemperature()));
+        data.put("timestamp", String.valueOf(weatherEvent.getTimestamp()));
+        log.info(new ObjectMessage(data));
+
         PutItemRequest putRequest = PutItemRequest.builder().tableName(tableName).item(item).build();
         ApiGatewayResponse response = new ApiGatewayResponse();
         try {
@@ -45,7 +63,7 @@ public class WeatherEventLambda {
             response.setStatusCode(200);
             response.setBody(objectMapper.writeValueAsString(putItemResponse.attributes()));
         } catch (ResourceNotFoundException resourceNotFoundException) {
-            System.err.format("Error: The Amazon DynamoDB table \"%s\" can't be found.\n", tableName);
+            context.getLogger().log(String.format("Error: The Amazon DynamoDB table \"%s\" can't be found.\n", tableName));
             response.setStatusCode(500);
             response.setBody("The Amazon DynamoDB table".concat(tableName).concat("can't be found."));
 
